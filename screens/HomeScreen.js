@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { View, FlatList, StyleSheet, Text } from "react-native";
+import { View, FlatList, StyleSheet, Text, Image } from "react-native";
 import { Card, Title, Button, Paragraph, Searchbar } from "react-native-paper";
 import axios from "axios";
+import * as ImagePicker from "expo-image-picker";
 
 const HomeScreen = ({ navigation }) => {
   const [characters, setCharacters] = useState([]);
   const [filteredCharacters, setFilteredCharacters] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [photo, setPhoto] = useState(null);
 
   const fetchCharacters = async () => {
     setLoading(true);
@@ -16,7 +18,7 @@ const HomeScreen = ({ navigation }) => {
         "https://api.attackontitanapi.com/characters"
       );
       setCharacters(response.data.results);
-      setFilteredCharacters(response.data.results); // inicializa a lista filtrada com todos
+      setFilteredCharacters(response.data.results);
     } catch (error) {
       console.error("Erro ao buscar personagens:", error);
     }
@@ -35,8 +37,39 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      alert("Permissão para acessar a câmera é necessária!");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 4],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setPhoto(result.assets[0].uri);
+    }
+  };
+
   return (
     <View style={styles.container}>
+      {/* 📸 Título e botão de tirar foto */}
+      <View style={styles.photoContainer}>
+        <Title style={styles.photoTitle}>Tire sua foto e compare com um personagem desse anime</Title>
+        <Button mode="outlined" onPress={pickImage} style={styles.photoButton}>
+          Tirar Foto
+        </Button>
+        {photo && (
+          <Image source={{ uri: photo }} style={styles.photoPreview} />
+        )}
+      </View>
+
+      {/* 🔍 Botão de busca */}
       <Button
         mode="contained"
         onPress={fetchCharacters}
@@ -95,6 +128,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
+  },
+  photoContainer: {
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  photoTitle: {
+    textAlign: "center",
+    marginBottom: 10,
+    fontSize: 18,
+  },
+  photoButton: {
+    marginBottom: 10,
+  },
+  photoPreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginTop: 10,
   },
   button: {
     marginBottom: 10,
